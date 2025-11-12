@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Encuentra tu Mesa - XV Años</title>
 
-<!-- Fuente general y cursiva -->
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="https://i.postimg.cc/vmkyZHKc/pngtree-a-black-butterfly-silhouette-png-image-14849347.png">
+
+<!-- Fuentes -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Great+Vibes&display=swap" rel="stylesheet">
 
 <style>
@@ -16,7 +19,7 @@
 
   html, body {
     height: auto;
-    overflow: hidden;
+    overflow-x: hidden;
   }
 
   body {
@@ -26,7 +29,6 @@
     text-align: center;
     padding: 10px 20px;
     margin: 0;
-    scroll-behavior: smooth;
   }
 
   h1 {
@@ -43,14 +45,12 @@
   h1 img.icono-mariposa {
     width: 26px;
     height: 26px;
-    vertical-align: middle;
   }
 
   p {
     font-size: 1em;
     color: var(--negro);
     margin-bottom: 15px;
-    line-height: 1.5em;
   }
 
   .nombre-quinceanera {
@@ -70,6 +70,7 @@
     font-size: 1em;
     outline: none;
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    box-sizing: border-box;
   }
 
   input:focus {
@@ -100,8 +101,6 @@
     border-radius: 8px;
     border: 1px solid #ccc;
     overflow: hidden;
-    z-index: 10;
-    transition: all 0.3s ease;
   }
 
   .opcion {
@@ -118,15 +117,15 @@
 
   #resultado {
     margin-top: 20px;
-    min-height: 260px;
+    min-height: 220px;
     text-align: center;
+    position: relative;
   }
 
-  /* Imagen por defecto */
   #imagen-defecto {
-    width: 260px;
-    opacity: 0.9;
-    margin-top: 10px;
+    width: 220px;
+    opacity: 0.8;
+    margin-top: 30px;
   }
 
   .tarjeta-mesa {
@@ -181,6 +180,7 @@
     font-style: normal;
     color: var(--verde-esmeralda);
     font-size: 1.5em;
+    letter-spacing: 1px;
   }
 
   .tarjeta-mesa .fecha {
@@ -196,8 +196,19 @@
     opacity: 0.9;
   }
 
+  /* 📱 Ajuste para móviles */
   @media (max-width: 480px) {
-    #imagen-defecto { width: 200px; }
+    h1 { font-size: 1.5em; }
+    input { font-size: 0.95em; width: 95%; }
+    button {
+      font-size: 0.9em;
+      width: 95%;          /* mismo ancho que el input */
+      max-width: 95%;
+      padding: 10px;
+    }
+    #sugerencias { max-width: 95%; }
+    .tarjeta-mesa { width: 90%; padding: 20px 12px; }
+    #imagen-defecto { width: 180px; margin-top: 20px; }
   }
 </style>
 </head>
@@ -218,6 +229,7 @@
 <button id="limpiar">Limpiar</button>
 
 <div id="sugerencias"></div>
+
 <div id="resultado">
   <img id="imagen-defecto" src="https://i.postimg.cc/2SLB53ch/quinceanera.png" alt="Imagen de quinceañera">
 </div>
@@ -239,11 +251,7 @@ fetch(sheetURL)
     const encabezados = filas[0].map(h => normalizar(h));
     const nombreIdx = encabezados.indexOf('nombre');
     const mesaIdx = encabezados.indexOf('mesa');
-
-    datos = filas.slice(1).map(fila => ({
-      nombre: fila[nombreIdx]?.trim(),
-      mesa: fila[mesaIdx]?.trim()
-    }));
+    datos = filas.slice(1).map(f => ({ nombre: f[nombreIdx]?.trim(), mesa: f[mesaIdx]?.trim() }));
   });
 
 const buscador = document.getElementById('buscador');
@@ -254,43 +262,44 @@ const limpiarBtn = document.getElementById('limpiar');
 buscador.addEventListener('input', e => {
   const texto = normalizar(e.target.value);
   sugerencias.innerHTML = '';
-  resultado.innerHTML = '<img id="imagen-defecto" src="https://i.postimg.cc/2SLB53ch/quinceanera.png" alt="Imagen de quinceañera">';
+  resultado.innerHTML = '';
 
-  if (texto.length < 1) return;
+  if (texto.length < 1) {
+    resultado.innerHTML = `<img id="imagen-defecto" src="https://i.postimg.cc/2SLB53ch/quinceanera.png" alt="Imagen de quinceañera">`;
+    return;
+  }
 
   const coincidencias = datos.filter(d => normalizar(d.nombre).includes(texto));
-
-  sugerencias.innerHTML = coincidencias.length
-    ? coincidencias.map(c => `<div class="opcion">${c.nombre}</div>`).join('')
-    : '<div class="opcion">No se encontró coincidencia 💭</div>';
-
-  document.querySelectorAll('.opcion').forEach((div, i) => {
-    div.onclick = () => {
-      buscador.value = coincidencias[i].nombre;
-      sugerencias.innerHTML = '';
-      mostrarTarjeta(coincidencias[i]);
-    };
-  });
+  if (coincidencias.length > 0) {
+    coincidencias.forEach(d => {
+      const opcion = document.createElement('div');
+      opcion.classList.add('opcion');
+      opcion.textContent = d.nombre;
+      opcion.onclick = () => mostrarResultado(d);
+      sugerencias.appendChild(opcion);
+    });
+  } else {
+    sugerencias.innerHTML = '<div class="opcion">Sin resultados</div>';
+  }
 });
-
-function mostrarTarjeta(c) {
-  resultado.innerHTML = `
-    <div class="tarjeta-mesa">
-      <h2>MESA</h2>
-      <div class="numero">${c.mesa}</div>
-      <div class="mensaje">Gracias por acompañarme en<br><i>Mis&nbsp;Quince</i></div>
-      <div class="fecha">15 NOV 2025</div>
-    </div>
-  `;
-}
 
 limpiarBtn.addEventListener('click', () => {
   buscador.value = '';
   sugerencias.innerHTML = '';
-  resultado.innerHTML = '<img id="imagen-defecto" src="https://i.postimg.cc/2SLB53ch/quinceanera.png" alt="Imagen de quinceañera">';
-  buscador.focus();
+  resultado.innerHTML = `<img id="imagen-defecto" src="https://i.postimg.cc/2SLB53ch/quinceanera.png" alt="Imagen de quinceañera">`;
 });
-</script>
 
+function mostrarResultado(dato) {
+  sugerencias.innerHTML = '';
+  resultado.innerHTML = `
+    <div class="tarjeta-mesa">
+      <h2>MESA</h2>
+      <div class="numero">${dato.mesa || '—'}</div>
+      <div class="mensaje">¡Disfruta mucho este día tan especial, <i>Camila</i> te espera con alegría!</div>
+      <div class="fecha">12 de noviembre, 2025</div>
+    </div>
+  `;
+}
+</script>
 </body>
 </html>
